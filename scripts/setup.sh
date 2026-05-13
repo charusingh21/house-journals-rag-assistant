@@ -35,6 +35,33 @@ INDEX_DB="${HOUSE_JOURNALS_INDEX_DB:-$APP_DIR/data/house_journals_index.sqlite}"
 START_DATE="${HOUSE_JOURNALS_START_DATE:-20250101}"
 END_DATE="${HOUSE_JOURNALS_END_DATE:-20261231}"
 LATEST_COUNT="${HOUSE_JOURNALS_LATEST_COUNT:-0}"
+CORPUS_URL="${HOUSE_JOURNALS_CORPUS_URL:-}"
+
+if [ -n "$CORPUS_URL" ] && [ ! -d "$PDF_DIR" ]; then
+  echo "Downloading House Journal corpus from HOUSE_JOURNALS_CORPUS_URL"
+  mkdir -p "$(dirname "$PDF_DIR")"
+  ARCHIVE_PATH="/tmp/house-journals-corpus.zip"
+  if command -v curl >/dev/null 2>&1; then
+    curl -L "$CORPUS_URL" -o "$ARCHIVE_PATH"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -O "$ARCHIVE_PATH" "$CORPUS_URL"
+  else
+    "$PYTHON_CMD" - <<PY
+import urllib.request
+urllib.request.urlretrieve("$CORPUS_URL", "$ARCHIVE_PATH")
+PY
+  fi
+  "$PYTHON_CMD" -m zipfile -e "$ARCHIVE_PATH" "$(dirname "$PDF_DIR")"
+fi
+
+if [ ! -d "$PDF_DIR" ]; then
+  FOUND_PDF="$(find "$(dirname "$PDF_DIR")" -maxdepth 1 -name '*.pdf' -print -quit 2>/dev/null || true)"
+  if [ -n "$FOUND_PDF" ]; then
+    echo "Corpus zip extracted PDFs directly under $(dirname "$PDF_DIR"); moving them into $PDF_DIR"
+    mkdir -p "$PDF_DIR"
+    find "$(dirname "$PDF_DIR")" -maxdepth 1 -name '*.pdf' -exec mv {} "$PDF_DIR"/ \;
+  fi
+fi
 
 if [ -d "$PDF_DIR" ] && find "$PDF_DIR" -maxdepth 1 -name '*.pdf' -print -quit | grep -q .; then
   echo "Building metadata index from $PDF_DIR"

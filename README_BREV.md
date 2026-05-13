@@ -21,6 +21,7 @@ export RAG_COLLECTION="house_journals_full_demo"
 export RAG_MODEL="nvidia/llama-3.3-nemotron-super-49b-v1.5"
 export HOUSE_JOURNALS_SAMPLE_DIR="/opt/house-journals/HouseJournalSample"
 export HOUSE_JOURNALS_INDEX_DB="/opt/house-journals/app/data/house_journals_index.sqlite"
+export HOUSE_JOURNALS_CORPUS_URL="https://approved-location/HouseJournalSample.zip"
 export HOUSE_JOURNALS_START_DATE="20250101"
 export HOUSE_JOURNALS_END_DATE="20261231"
 export HOUSE_JOURNALS_LATEST_COUNT="0"
@@ -67,7 +68,13 @@ Off-topic examples should be refused:
 
 ## Packaging PDFs
 
-For external sharing, only package approved public documents. Recommended path inside Brev:
+For external sharing, only package approved public documents. The easiest repeatable pattern is to host a zip at an approved URL and set `HOUSE_JOURNALS_CORPUS_URL` in the launchable. The zip can contain either:
+
+```bash
+HouseJournalSample/*.pdf
+```
+
+or PDFs directly at the zip root. Setup will normalize them into the expected folder:
 
 ```bash
 /opt/house-journals/HouseJournalSample
