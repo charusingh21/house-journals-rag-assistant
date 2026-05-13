@@ -257,6 +257,27 @@ def normalize_document(item: Any) -> dict[str, str] | None:
 
 
 def fallback_documents() -> dict[str, Any]:
+    if METADATA_DB.exists():
+        try:
+            conn = sqlite3.connect(METADATA_DB)
+            rows = conn.execute(
+                "select filename from documents order by filename"
+            ).fetchall()
+            conn.close()
+            documents = [doc for doc in (normalize_document(row[0]) for row in rows) if doc]
+            if documents:
+                return {
+                    "collection": COLLECTION_NAME,
+                    "source": "metadata_index",
+                    "documents": documents,
+                    "message": (
+                        "Showing PDFs from the local metadata index. Retrieved answers use "
+                        "the RAG collection plus exact bill lookup from this index."
+                    ),
+                }
+        except Exception:
+            pass
+
     known_sets = {
         "house_reps_demo_comparison": [
             "20250203.pdf",
@@ -525,7 +546,7 @@ def summarize_exact_bill_hit(bill: str, hit: dict[str, str]) -> str:
 
 def exact_bill_lookup(question: str) -> dict[str, Any] | None:
     bill = bill_number(question)
-    if not bill or not LOCAL_SAMPLE_DIR.exists():
+    if not bill:
         return None
     hits = exact_bill_hits(bill)
     if not hits:
