@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>House Journals Research Assistant</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="chat-header">
+    <div>
+      <div class="eyebrow">Pennsylvania House Journal Corpus</div>
+      <h1>House Journals Research Assistant</h1>
+      <p>Search official House Journal PDFs with cited, verifiable answers.</p>
+      <div class="powered-by">Powered by NVIDIA RAG Blueprint</div>
+    </div>
+  </header>
+
+  <main class="workspace workspace-layout">
+    <aside class="documents-panel">
+      <div class="section-title">
+        <div>
+          <h2>Indexed PDFs</h2>
+            <p>Official House Journal files available to this workspace.</p>
+        </div>
+        <span id="documentCount">loading</span>
+      </div>
+      <div id="documentList" class="document-empty">Loading indexed document list...</div>
+      <form id="uploadForm" class="upload-panel">
+        <h3>Add Journal PDFs</h3>
+        <p>Upload more official PDFs to expand this research corpus.</p>
+        <input id="pdfUpload" type="file" accept="application/pdf,.pdf" multiple>
+        <button id="uploadBtn" type="submit">Add to corpus</button>
+        <div id="uploadStatus" class="upload-status">Choose one or more PDFs to add.</div>
+      </form>
+    </aside>
+
+    <div class="main-column">
+      <section class="question-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Start with a question</h2>
+            <p>Ask about a bill, committee, vote, sponsor, amendment, or House Journal date.</p>
+          </div>
+        </div>
+
+        <div class="examples-panel">
+          <div class="examples-head">
+            <h3>Example questions</h3>
+          </div>
+          <div class="example-grid">
+            <button>
+              Tell me about HB 41
+            </button>
+            <button>
+              What bills address environmental issues?
+            </button>
+            <button>
+              What bills are still in committee?
+            </button>
+            <button>
+              Which bills were referred to the Education committee?
+            </button>
+            <button class="off-topic-example">
+              What is the weather today?
+            </button>
+            <button class="off-topic-example">
+              Who won the football game?
+            </button>
+            <button class="off-topic-example">
+              Tell me about California bills
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+      <section class="results-grid">
+        <article class="answer-panel">
+          <div class="section-title">
+            <h2>Research Chat</h2>
+            <span id="answerMeta">Ready</span>
+          </div>
+          <div id="answer" class="answer empty">
+            Ask a question to see a grounded legislative answer.
+          </div>
+          <div class="chat-composer">
+            <textarea id="queryInput" rows="2" placeholder="Ask about bills, committees, dates, votes, sponsors, or House Journal activity..."></textarea>
+            <button id="sendBtn" type="button">Ask</button>
+            <button id="stopBtn" type="button" disabled>Stop</button>
+          </div>
+          <div class="answer-actions">
+            <button id="copyAnswerBtn" type="button">Copy answer</button>
+            <button id="addAnalysisBtn" type="button">Add to analysis</button>
+          </div>
+        </article>
+
+        <aside class="sources-panel">
+          <div class="section-title">
+            <h2>Retrieved Sources</h2>
+            <span>citations</span>
+          </div>
+          <div id="sourcesList" class="sources-empty">Relevant PDF passages will appear here.</div>
+        </aside>
+      </section>
+
+      <section class="analysis-panel">
+        <div class="section-title">
+          <div>
+            <h2>Analysis Workspace</h2>
+            <p>Collect answer snippets and citations for a bill-analysis note.</p>
+          </div>
+          <div class="workspace-actions">
+            <button id="generateMemoBtn" type="button">Generate bill memo</button>
+            <button id="copyMemoBtn" type="button">Copy memo</button>
+            <button id="clearAnalysisBtn" type="button">Clear</button>
+          </div>
+        </div>
+        <div id="analysisList" class="analysis-empty">Use “Add to analysis” after a response to collect findings here.</div>
+      </section>
+
+      <section class="memo-panel">
+        <div class="section-title">
+          <div>
+            <h2>Bill Memo Draft</h2>
+            <p>Generated from the saved analysis workspace findings.</p>
+          </div>
+        </div>
+        <pre id="memoDraft" class="memo-empty">Save one or more findings, then click “Generate bill memo.”</pre>
+      </section>
+    </div>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
