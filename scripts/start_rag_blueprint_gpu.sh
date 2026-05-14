@@ -60,6 +60,11 @@ export APP_RETRIEVER_TOPK="${APP_RETRIEVER_TOPK:-6}"
 export VECTOR_DB_TOPK="${VECTOR_DB_TOPK:-60}"
 export LLM_MAX_TOKENS="${LLM_MAX_TOKENS:-4096}"
 
+mkdir -p "$MODEL_DIRECTORY"
+if command -v sudo >/dev/null 2>&1; then
+  sudo chown -R "$(id -u):$(id -g)" "$MODEL_DIRECTORY" 2>/dev/null || true
+fi
+
 if [ "$RAG_BACKEND_MODE" = "docker_self_hosted" ]; then
   export APP_LLM_SERVERURL="${APP_LLM_SERVERURL:-nim-llm:8000}"
   export APP_EMBEDDINGS_SERVERURL="${APP_EMBEDDINGS_SERVERURL:-nemotron-embedding-ms:8000}"
