@@ -41,9 +41,7 @@ DEFAULT_MAX_TOKENS = int(os.environ.get("RAG_MAX_TOKENS", "700"))
 DEFAULT_PROFILE = os.environ.get("RAG_DEFAULT_PROFILE", "balanced")
 MODEL_PROFILES_RAW = os.environ.get(
     "RAG_MODEL_PROFILES",
-    "fast=nvidia/nemotron-3-nano-30b-a3b|450|Fast demo;"
-    "balanced=nvidia/llama-3.3-nemotron-super-49b-v1.5|700|Balanced;"
-    "deep=nvidia/llama-3.3-nemotron-super-49b-v1.5|1100|Deep research",
+    f"balanced={DEFAULT_MODEL}|{DEFAULT_MAX_TOKENS}|Balanced",
 )
 PDF_TEXT_CACHE: dict[str, list[tuple[int, str]]] = {}
 
