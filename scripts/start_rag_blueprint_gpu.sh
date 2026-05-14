@@ -75,11 +75,11 @@ if [ "$RAG_BACKEND_MODE" = "docker_self_hosted" ]; then
   export EMBEDDING_MS_GPU_ID="${EMBEDDING_MS_GPU_ID:-0}"
   export RANKING_MS_GPU_ID="${RANKING_MS_GPU_ID:-0}"
 elif [ "$RAG_BACKEND_MODE" = "docker_hybrid" ]; then
-  export APP_LLM_SERVERURL="${APP_LLM_SERVERURL:-}"
-  export APP_EMBEDDINGS_SERVERURL="${APP_EMBEDDINGS_SERVERURL:-nemotron-embedding-ms:8000}"
-  export APP_RANKING_SERVERURL="${APP_RANKING_SERVERURL:-nemotron-ranking-ms:8000}"
-  export SUMMARY_LLM_SERVERURL="${SUMMARY_LLM_SERVERURL:-}"
-  export REFLECTION_LLM_SERVERURL="${REFLECTION_LLM_SERVERURL:-}"
+  export APP_LLM_SERVERURL=""
+  export APP_EMBEDDINGS_SERVERURL="nemotron-embedding-ms:8000"
+  export APP_RANKING_SERVERURL="nemotron-ranking-ms:8000"
+  export SUMMARY_LLM_SERVERURL=""
+  export REFLECTION_LLM_SERVERURL=""
   export EMBEDDING_MS_GPU_ID="${EMBEDDING_MS_GPU_ID:-0}"
   export RANKING_MS_GPU_ID="${RANKING_MS_GPU_ID:-0}"
 else
