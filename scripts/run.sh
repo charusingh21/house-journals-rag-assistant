@@ -32,7 +32,7 @@ if [ -z "${RAG_MODEL_PROFILES:-}" ]; then
   if [ "${RAG_BACKEND_MODE:-nvidia_hosted}" = "docker_self_hosted" ]; then
     export RAG_MODEL_PROFILES="balanced=$RAG_MODEL|$RAG_MAX_TOKENS|Balanced"
   else
-    export RAG_MODEL_PROFILES="fast=nvidia/nemotron-3-nano-30b-a3b|450|Fast demo;llama31=meta/llama-3.1-8b-instruct|700|Llama 3.1 8B;deep=nvidia/llama-3.3-nemotron-super-49b-v1.5|1100|Deep research"
+    export RAG_MODEL_PROFILES="fast=nvidia/nemotron-3-nano-30b-a3b|450|Nemotron 30B;llama31=meta/llama-3.1-8b-instruct|700|Llama 3.1 8B;deep=nvidia/llama-3.3-nemotron-super-49b-v1.5|1100|Deep research"
   fi
 fi
 
