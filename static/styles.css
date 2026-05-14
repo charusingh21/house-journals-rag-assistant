@@ -118,6 +118,33 @@ h1 {
   box-shadow: var(--shadow);
 }
 
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.model-control {
+  display: grid;
+  gap: 6px;
+  min-width: 300px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.model-control select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  color: var(--text);
+  padding: 9px 10px;
+  font: inherit;
+  font-weight: 600;
+}
+
 .documents-panel {
   position: sticky;
   top: 18px;
@@ -698,6 +725,11 @@ button:hover {
   .examples-head {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .model-control {
+    min-width: 0;
+    width: 100%;
   }
 
   #sendBtn,

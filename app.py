@@ -37,7 +37,51 @@ COLLECTION_NAME = os.environ.get("RAG_COLLECTION", "house_journals_research")
 LOCAL_SAMPLE_DIR = Path(os.environ.get("HOUSE_JOURNALS_SAMPLE_DIR", "/Users/charus/Downloads/HouseJournalSample"))
 METADATA_DB = Path(os.environ.get("HOUSE_JOURNALS_INDEX_DB", APP_DIR / "data" / "house_journals_index.sqlite"))
 DEFAULT_MODEL = os.environ.get("RAG_MODEL", "nvidia/llama-3.3-nemotron-super-49b-v1.5")
+DEFAULT_MAX_TOKENS = int(os.environ.get("RAG_MAX_TOKENS", "700"))
+DEFAULT_PROFILE = os.environ.get("RAG_DEFAULT_PROFILE", "balanced")
+MODEL_PROFILES_RAW = os.environ.get(
+    "RAG_MODEL_PROFILES",
+    "fast=nvidia/nemotron-3-nano-30b-a3b|450|Fast demo;"
+    "balanced=nvidia/llama-3.3-nemotron-super-49b-v1.5|700|Balanced;"
+    "deep=nvidia/llama-3.3-nemotron-super-49b-v1.5|1100|Deep research",
+)
 PDF_TEXT_CACHE: dict[str, list[tuple[int, str]]] = {}
+
+
+def parse_model_profiles() -> dict[str, dict[str, Any]]:
+    profiles: dict[str, dict[str, Any]] = {}
+    for item in MODEL_PROFILES_RAW.split(";"):
+        if not item.strip() or "=" not in item:
+            continue
+        key, raw_value = item.split("=", 1)
+        parts = [part.strip() for part in raw_value.split("|")]
+        model = parts[0] if parts else DEFAULT_MODEL
+        try:
+            max_tokens = int(parts[1]) if len(parts) > 1 and parts[1] else DEFAULT_MAX_TOKENS
+        except ValueError:
+            max_tokens = DEFAULT_MAX_TOKENS
+        label = parts[2] if len(parts) > 2 and parts[2] else key.strip().title()
+        profiles[key.strip()] = {
+            "key": key.strip(),
+            "model": model,
+            "max_tokens": max_tokens,
+            "label": label,
+        }
+    if not profiles:
+        profiles["balanced"] = {
+            "key": "balanced",
+            "model": DEFAULT_MODEL,
+            "max_tokens": DEFAULT_MAX_TOKENS,
+            "label": "Balanced",
+        }
+    return profiles
+
+
+MODEL_PROFILES = parse_model_profiles()
+
+
+def selected_profile(profile_key: str | None) -> dict[str, Any]:
+    return MODEL_PROFILES.get(profile_key or "", MODEL_PROFILES.get(DEFAULT_PROFILE) or next(iter(MODEL_PROFILES.values())))
 
 
 SYSTEM_PROMPT = """You are a Pennsylvania House Journals Research Assistant.
@@ -663,7 +707,8 @@ def upload_pdfs(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
     }
 
 
-def ask_rag(question: str) -> dict[str, Any]:
+def ask_rag(question: str, profile_key: str | None = None) -> dict[str, Any]:
+    profile = selected_profile(profile_key)
     if is_off_topic(question):
         return {
             "answer": (
@@ -673,7 +718,7 @@ def ask_rag(question: str) -> dict[str, Any]:
             ),
             "sources": [],
             "collection": COLLECTION_NAME,
-            "model": DEFAULT_MODEL,
+            "model": profile["model"],
             "mode": "guardrail_refusal",
         }
 
@@ -688,8 +733,9 @@ def ask_rag(question: str) -> dict[str, Any]:
         ],
         "collection_names": [COLLECTION_NAME],
         "use_knowledge_base": True,
+        "model": profile["model"],
         "temperature": 0.1,
-        "max_tokens": 1100,
+        "max_tokens": profile["max_tokens"],
     }
 
     req = urllib.request.Request(
@@ -728,7 +774,8 @@ def ask_rag(question: str) -> dict[str, Any]:
         "answer": answer or "No answer was generated from the indexed House Journals.",
         "sources": extract_sources(answer, citation_events),
         "collection": COLLECTION_NAME,
-        "model": DEFAULT_MODEL,
+        "model": profile["model"],
+        "profile": profile["key"],
         "mode": "bill_lookup" if bill_number(question) else "research_query",
     }
 
@@ -746,6 +793,8 @@ class Handler(BaseHTTPRequestHandler):
                     "rag_api_url": RAG_API_URL,
                     "ingestor_api_url": INGESTOR_API_URL,
                     "model": DEFAULT_MODEL,
+                    "model_profiles": list(MODEL_PROFILES.values()),
+                    "default_profile": DEFAULT_PROFILE,
                     "corpus": (
                         "HouseJournalSample demo corpus"
                         if COLLECTION_NAME == "house_journals_full_demo"
@@ -794,10 +843,11 @@ class Handler(BaseHTTPRequestHandler):
         try:
             payload = read_json(self)
             question = (payload.get("question") or "").strip()
+            profile_key = (payload.get("profile") or DEFAULT_PROFILE).strip()
             if not question:
                 json_response(self, 400, {"error": "Question is required."})
                 return
-            json_response(self, 200, ask_rag(question))
+            json_response(self, 200, ask_rag(question, profile_key))
         except (socket.timeout, TimeoutError) as exc:
             json_response(
                 self,

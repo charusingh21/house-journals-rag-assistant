@@ -42,6 +42,14 @@ export NVIDIA_API_KEY
 export NGC_API_KEY
 export COLLECTION_NAME
 export MILVUS_VERSION="${MILVUS_VERSION:-v2.6.5-gpu}"
+export APP_LLM_MODELNAME="${RAG_MODEL:-${APP_LLM_MODELNAME:-nvidia/llama-3.3-nemotron-super-49b-v1.5}}"
+export APP_FILTEREXPRESSIONGENERATOR_MODELNAME="${APP_FILTEREXPRESSIONGENERATOR_MODELNAME:-$APP_LLM_MODELNAME}"
+export APP_QUERYREWRITER_MODELNAME="${APP_QUERYREWRITER_MODELNAME:-$APP_LLM_MODELNAME}"
+export SUMMARY_LLM="${SUMMARY_LLM:-$APP_LLM_MODELNAME}"
+export REFLECTION_LLM="${REFLECTION_LLM:-$APP_LLM_MODELNAME}"
+export APP_RETRIEVER_TOPK="${APP_RETRIEVER_TOPK:-6}"
+export VECTOR_DB_TOPK="${VECTOR_DB_TOPK:-60}"
+export LLM_MAX_TOKENS="${LLM_MAX_TOKENS:-4096}"
 
 echo "Starting GPU Milvus/vector DB"
 docker compose -f deploy/compose/vectordb.yaml up -d
@@ -69,3 +77,5 @@ echo "RAG Blueprint startup requested."
 echo "RAG API: http://127.0.0.1:8081/v1/generate"
 echo "Ingestor API: http://127.0.0.1:8082/v1/documents"
 echo "Collection: $COLLECTION_NAME"
+echo "LLM model: $APP_LLM_MODELNAME"
+echo "Retriever top-k: $APP_RETRIEVER_TOPK"

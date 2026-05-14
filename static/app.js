@@ -10,6 +10,7 @@ const uploadStatus = document.getElementById('uploadStatus');
 const sourcesList = document.getElementById('sourcesList');
 const answerEl = document.getElementById('answer');
 const answerMeta = document.getElementById('answerMeta');
+const modelProfileSelect = document.getElementById('modelProfileSelect');
 const copyAnswerBtn = document.getElementById('copyAnswerBtn');
 const addAnalysisBtn = document.getElementById('addAnalysisBtn');
 const clearAnalysisBtn = document.getElementById('clearAnalysisBtn');
@@ -24,6 +25,7 @@ let lastSources = [];
 let analysisItems = [];
 let conversationStarted = false;
 let currentController = null;
+let activeModelProfile = 'balanced';
 
 function escapeHtml(value) {
   return String(value)
@@ -174,7 +176,19 @@ function renderDocuments(data) {
 }
 
 async function refreshStatus() {
-  await api('/api/status').catch(() => {});
+  try {
+    const data = await api('/api/status');
+    const profiles = data.model_profiles || [];
+    activeModelProfile = data.default_profile || activeModelProfile;
+    if (profiles.length && modelProfileSelect) {
+      modelProfileSelect.innerHTML = profiles.map((profile) => `
+        <option value="${escapeHtml(profile.key)}">
+          ${escapeHtml(profile.label)} (${escapeHtml(profile.model)})
+        </option>
+      `).join('');
+      modelProfileSelect.value = activeModelProfile;
+    }
+  } catch (_) {}
 }
 
 async function refreshDocuments() {
@@ -221,13 +235,15 @@ async function ask(question) {
   try {
     const data = await api('/api/ask', {
       method: 'POST',
-      body: JSON.stringify({question: clean}),
+      body: JSON.stringify({question: clean, profile: activeModelProfile}),
       signal: currentController.signal
     });
     assistantMessage.className = 'chat-message assistant-message';
     assistantMessage.innerHTML = `<div class="chat-label">Research Assistant</div><div>${renderAnswerMarkdown(data.answer)}</div>`;
     assistantMessage.scrollIntoView({behavior: 'smooth', block: 'nearest'});
-    answerMeta.textContent = data.mode === 'bill_lookup' ? 'Bill lookup' : 'Sourced research';
+    answerMeta.textContent = data.mode === 'bill_lookup'
+      ? 'Bill lookup'
+      : `${data.profile || activeModelProfile} · sourced research`;
     lastAnswer = data.answer;
     lastSources = data.sources || [];
     renderSources(data.sources);
@@ -443,6 +459,12 @@ stopBtn.addEventListener('click', () => {
     currentController.abort();
   }
 });
+
+if (modelProfileSelect) {
+  modelProfileSelect.addEventListener('change', () => {
+    activeModelProfile = modelProfileSelect.value;
+  });
+}
 
 queryInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
