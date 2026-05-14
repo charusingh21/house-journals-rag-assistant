@@ -48,6 +48,13 @@ RANKING_MS_GPU_ID=0
 ```
 
 For full self-hosted Docker NIM mode, use `RAG_BACKEND_MODE=docker_self_hosted` and also set `LLM_MS_GPU_ID`.
+If the default Super 49B NIM is not compatible with the host driver, try a smaller LLM NIM image:
+
+```bash
+RAG_BACKEND_MODE=docker_self_hosted
+RAG_MODEL=meta/llama-3.1-8b-instruct
+LLM_NIM_IMAGE=nvcr.io/nim/meta/llama-3.1-8b-instruct:1.10.1
+```
 
 Self-hosted mode downloads large model caches on first startup and can take much longer to become ready. It is useful for performance and control testing, but it is not automatically faster unless the selected NIM profile, GPU count, context size, and concurrency are tuned.
 

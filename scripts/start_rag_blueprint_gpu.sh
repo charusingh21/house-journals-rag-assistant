@@ -59,6 +59,7 @@ export REFLECTION_LLM="${REFLECTION_LLM:-$APP_LLM_MODELNAME}"
 export APP_RETRIEVER_TOPK="${APP_RETRIEVER_TOPK:-6}"
 export VECTOR_DB_TOPK="${VECTOR_DB_TOPK:-60}"
 export LLM_MAX_TOKENS="${LLM_MAX_TOKENS:-4096}"
+export LLM_NIM_IMAGE="${LLM_NIM_IMAGE:-nvcr.io/nim/nvidia/llama-3.3-nemotron-super-49b-v1.5:1.14.0}"
 
 mkdir -p "$MODEL_DIRECTORY"
 if command -v sudo >/dev/null 2>&1; then
@@ -93,7 +94,13 @@ docker compose -f deploy/compose/vectordb.yaml up -d
 
 if [ "$RAG_BACKEND_MODE" = "docker_self_hosted" ]; then
   echo "Starting self-hosted NIMs for LLM, embedding, and reranking"
-  docker compose -f deploy/compose/nims.yaml up -d nim-llm nemotron-embedding-ms nemotron-ranking-ms
+  LLM_OVERRIDE_FILE="/tmp/rag-nim-llm-override.yaml"
+  cat > "$LLM_OVERRIDE_FILE" <<EOF
+services:
+  nim-llm:
+    image: ${LLM_NIM_IMAGE}
+EOF
+  docker compose -f deploy/compose/nims.yaml -f "$LLM_OVERRIDE_FILE" up -d nim-llm nemotron-embedding-ms nemotron-ranking-ms
 elif [ "$RAG_BACKEND_MODE" = "docker_hybrid" ]; then
   echo "Starting self-hosted NIMs for embedding and reranking"
   docker compose -f deploy/compose/nims.yaml up -d nemotron-embedding-ms nemotron-ranking-ms
