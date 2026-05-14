@@ -4,6 +4,13 @@ set -euo pipefail
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$APP_DIR"
 
+if [ -f .env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+fi
+
 PYTHON_CMD="python3"
 if [ -d .venv ] && ! .venv/bin/python -c "import encodings" >/dev/null 2>&1; then
   echo "Existing virtual environment is not usable; recreating it."

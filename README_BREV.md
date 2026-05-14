@@ -27,29 +27,51 @@ export HOUSE_JOURNALS_END_DATE="20261231"
 export HOUSE_JOURNALS_LATEST_COUNT="0"
 ```
 
-## Brev Launchable Setup
+## Recommended Brev Setup For Customer Demo
 
 Use these settings in Brev:
 
 - Name: `NVIDIA Legislative Research Assistant`
-- Compute: CPU is enough when using NVIDIA-hosted endpoints; use GPU only if self-hosting models
-- RAM: `32 GB` minimum, `64 GB` preferred for larger PDF corpora
-- Disk: `200 GB` minimum, `500 GB` if packaging many PDFs
+- Compute: `2x L40S 48GB`
+- RAM: `128 GB` preferred
+- Disk: `500 GB`
 - Exposed port: `5056`
 - Setup script: `scripts/setup.sh`
 - Run command: `scripts/run.sh`
 
-## First-Time Instance Setup
+Why GPU: the RAG Blueprint stack can use GPU Milvus/vector search and the normal
+GPU compose path. It also avoids the CPU-only workaround that made the first
+ingestion test slow.
+
+## First-Time GPU Instance Setup
 
 ```bash
-cd /opt/house-journals/app
+cd /home/ubuntu/house-journals-rag-assistant
 cp .env.example .env
-# Edit .env and add the RAG endpoints / key values supplied for the demo.
+# Edit .env and add NVIDIA_API_KEY plus any corpus URL or local PDF folder.
 ./scripts/setup.sh
+
+# Start the NVIDIA RAG Blueprint services on the GPU instance.
+./scripts/start_rag_blueprint_gpu.sh
+
+# Create the collection and ingest the newest indexed PDFs.
+./scripts/ingest_house_journals.py \
+  --pdf-dir "${HOUSE_JOURNALS_SAMPLE_DIR:-HouseJournalSample}" \
+  --db "${HOUSE_JOURNALS_INDEX_DB:-data/house_journals_index.sqlite}" \
+  --collection "${RAG_COLLECTION:-house_journals_full_demo}" \
+  --latest "${HOUSE_JOURNALS_INGEST_LATEST:-40}"
+
+# Start the custom research UI.
 ./scripts/run.sh
 ```
 
 Open the exposed Brev port for `5056`.
+
+For an all-in-one local demo start, after `.env` is filled in:
+
+```bash
+./scripts/start_demo_gpu.sh
+```
 
 ## Sample Partner Demo Questions
 
@@ -91,7 +113,32 @@ python scripts/build_metadata_index.py \
 
 For the demo, setup indexes the 2025-2026 slice by default. This keeps the demo focused while preserving important examples like `HB 41`. Set `HOUSE_JOURNALS_START_DATE`, `HOUSE_JOURNALS_END_DATE`, or `HOUSE_JOURNALS_LATEST_COUNT` to change the sample selection.
 
-The RAG corpus also needs those same PDFs ingested into the NVIDIA RAG Blueprint collection. The UI's `Add Journal PDFs` button can send more PDFs to the ingestor when `INGESTOR_API_URL` is reachable.
+The RAG corpus also needs those same PDFs ingested into the NVIDIA RAG Blueprint collection. Use:
+
+```bash
+./scripts/ingest_house_journals.py \
+  --pdf-dir "$HOUSE_JOURNALS_SAMPLE_DIR" \
+  --db "$HOUSE_JOURNALS_INDEX_DB" \
+  --collection "$RAG_COLLECTION" \
+  --latest 40
+```
+
+The UI's `Add Journal PDFs` button can send more PDFs to the ingestor when `INGESTOR_API_URL` is reachable.
+
+## GPU Demo Validation
+
+After `start_rag_blueprint_gpu.sh`, check:
+
+```bash
+curl -s "http://127.0.0.1:8081/v1/health?check_dependencies=true"
+curl -s "http://127.0.0.1:8082/v1/health?check_dependencies=true"
+```
+
+After ingestion, check:
+
+```bash
+curl -s "http://127.0.0.1:8082/v1/documents?collection_name=house_journals_full_demo"
+```
 
 ## What To Share With External Partners
 
