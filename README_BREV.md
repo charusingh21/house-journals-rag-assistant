@@ -19,6 +19,7 @@ export RAG_API_URL="http://127.0.0.1:8081/v1/generate"
 export INGESTOR_API_URL="http://127.0.0.1:8082/v1/documents"
 export RAG_COLLECTION="house_journals_full_demo"
 export RAG_MODEL="nvidia/llama-3.3-nemotron-super-49b-v1.5"
+export RAG_BACKEND_MODE="nvidia_hosted"
 export HOUSE_JOURNALS_SAMPLE_DIR="/opt/house-journals/HouseJournalSample"
 export HOUSE_JOURNALS_INDEX_DB="/opt/house-journals/app/data/house_journals_index.sqlite"
 export HOUSE_JOURNALS_CORPUS_URL="https://approved-location/HouseJournalSample.zip"
@@ -26,6 +27,27 @@ export HOUSE_JOURNALS_START_DATE="20250101"
 export HOUSE_JOURNALS_END_DATE="20261231"
 export HOUSE_JOURNALS_LATEST_COUNT="0"
 ```
+
+## Model Runtime Modes
+
+`RAG_BACKEND_MODE` controls where the AI models run:
+
+| Mode | What happens | Best for |
+|---|---|---|
+| `nvidia_hosted` | RAG services run on the Brev machine, but LLM, embedding, and reranking call NVIDIA-hosted endpoints. | Fastest setup, simplest demo, no local model download. |
+| `docker_self_hosted` | RAG services plus core NIM containers run on the GPU machine through Docker Compose. | Testing local NIM performance/control on GPU hardware. |
+
+For self-hosted Docker NIM mode, keep these in `.env`:
+
+```bash
+RAG_BACKEND_MODE=docker_self_hosted
+MODEL_DIRECTORY=/home/ubuntu/.cache/model-cache
+LLM_MS_GPU_ID=1
+EMBEDDING_MS_GPU_ID=0
+RANKING_MS_GPU_ID=0
+```
+
+Self-hosted mode downloads large model caches on first startup and can take much longer to become ready. It is useful for performance and control testing, but it is not automatically faster unless the selected NIM profile, GPU count, context size, and concurrency are tuned.
 
 ## Recommended Brev Setup For Customer Demo
 
