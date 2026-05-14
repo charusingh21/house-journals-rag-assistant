@@ -36,11 +36,11 @@ echo "$NGC_API_KEY" | docker login nvcr.io -u '$oauthtoken' --password-stdin >/d
 
 set -a
 source deploy/compose/.env
-if [ "$RAG_BACKEND_MODE" = "nvidia_hosted" ]; then
+if [ "$RAG_BACKEND_MODE" = "nvidia_hosted" ] || [ "$RAG_BACKEND_MODE" = "docker_hybrid" ]; then
   source deploy/compose/nvdev.env
 elif [ "$RAG_BACKEND_MODE" != "docker_self_hosted" ]; then
   echo "Unsupported RAG_BACKEND_MODE: $RAG_BACKEND_MODE"
-  echo "Use nvidia_hosted or docker_self_hosted."
+  echo "Use nvidia_hosted, docker_hybrid, or docker_self_hosted."
   exit 1
 fi
 set +a
@@ -74,6 +74,14 @@ if [ "$RAG_BACKEND_MODE" = "docker_self_hosted" ]; then
   export LLM_MS_GPU_ID="${LLM_MS_GPU_ID:-1}"
   export EMBEDDING_MS_GPU_ID="${EMBEDDING_MS_GPU_ID:-0}"
   export RANKING_MS_GPU_ID="${RANKING_MS_GPU_ID:-0}"
+elif [ "$RAG_BACKEND_MODE" = "docker_hybrid" ]; then
+  export APP_LLM_SERVERURL="${APP_LLM_SERVERURL:-}"
+  export APP_EMBEDDINGS_SERVERURL="${APP_EMBEDDINGS_SERVERURL:-nemotron-embedding-ms:8000}"
+  export APP_RANKING_SERVERURL="${APP_RANKING_SERVERURL:-nemotron-ranking-ms:8000}"
+  export SUMMARY_LLM_SERVERURL="${SUMMARY_LLM_SERVERURL:-}"
+  export REFLECTION_LLM_SERVERURL="${REFLECTION_LLM_SERVERURL:-}"
+  export EMBEDDING_MS_GPU_ID="${EMBEDDING_MS_GPU_ID:-0}"
+  export RANKING_MS_GPU_ID="${RANKING_MS_GPU_ID:-0}"
 else
   export APP_LLM_SERVERURL="${APP_LLM_SERVERURL:-}"
   export APP_EMBEDDINGS_SERVERURL="${APP_EMBEDDINGS_SERVERURL:-https://integrate.api.nvidia.com/v1}"
@@ -86,6 +94,9 @@ docker compose -f deploy/compose/vectordb.yaml up -d
 if [ "$RAG_BACKEND_MODE" = "docker_self_hosted" ]; then
   echo "Starting self-hosted NIMs for LLM, embedding, and reranking"
   docker compose -f deploy/compose/nims.yaml up -d nim-llm nemotron-embedding-ms nemotron-ranking-ms
+elif [ "$RAG_BACKEND_MODE" = "docker_hybrid" ]; then
+  echo "Starting self-hosted NIMs for embedding and reranking"
+  docker compose -f deploy/compose/nims.yaml up -d nemotron-embedding-ms nemotron-ranking-ms
 fi
 
 echo "Starting NVIDIA RAG ingestor"

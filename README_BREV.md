@@ -35,17 +35,19 @@ export HOUSE_JOURNALS_LATEST_COUNT="0"
 | Mode | What happens | Best for |
 |---|---|---|
 | `nvidia_hosted` | RAG services run on the Brev machine, but LLM, embedding, and reranking call NVIDIA-hosted endpoints. | Fastest setup, simplest demo, no local model download. |
-| `docker_self_hosted` | RAG services plus core NIM containers run on the GPU machine through Docker Compose. | Testing local NIM performance/control on GPU hardware. |
+| `docker_hybrid` | RAG services plus embedding/reranking NIMs run on the GPU machine; answer generation still uses NVIDIA-hosted endpoints. | Faster retrieval experiments without running a large local LLM. |
+| `docker_self_hosted` | RAG services plus LLM, embedding, and reranking NIMs run on the GPU machine through Docker Compose. | Testing full local NIM control on GPU hardware with enough disk, driver support, and VRAM. |
 
-For self-hosted Docker NIM mode, keep these in `.env`:
+For hybrid Docker NIM mode, keep these in `.env`:
 
 ```bash
-RAG_BACKEND_MODE=docker_self_hosted
+RAG_BACKEND_MODE=docker_hybrid
 MODEL_DIRECTORY=/home/ubuntu/.cache/model-cache
-LLM_MS_GPU_ID=1
 EMBEDDING_MS_GPU_ID=0
 RANKING_MS_GPU_ID=0
 ```
+
+For full self-hosted Docker NIM mode, use `RAG_BACKEND_MODE=docker_self_hosted` and also set `LLM_MS_GPU_ID`.
 
 Self-hosted mode downloads large model caches on first startup and can take much longer to become ready. It is useful for performance and control testing, but it is not automatically faster unless the selected NIM profile, GPU count, context size, and concurrency are tuned.
 
